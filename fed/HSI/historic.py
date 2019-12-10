@@ -1,3 +1,8 @@
+# User-defined exception
+class inputDateError(Exception):
+    """Raised whrn the input date is not of the form YYYY-MM-DD"""
+    pass
+
 class historic():
     """"""
     
@@ -24,9 +29,12 @@ class historic():
            import seaborn
         except ImportError:
             print('Error, the module "seaborn" is required.')
-        self._stockscodes=stockscodes
+        try:
+           import re
+        except ImportError:
+            print('Error, the module "re" is required.')
         
-        # import datetime
+        
         if enddate==None:
             enddate=str(datetime.date.today())
         else:
@@ -36,10 +44,29 @@ class historic():
             temp[0]=str(int(temp[0])-1)
             startdate="".join(temp)
         else:
-            pass            
+            pass
+        
+        gex=re.compile(r"[\d]{4}-[\d]{2}-[\d]{2}")
+        try:
+            if gex.match(startdate):
+                pass
+            else:
+                raise inputDateError()
+        except inputDateError:
+            print("startdate must be of the format YYYY-MM-DD")
+        try:
+            if gex.match(enddate):
+                pass
+            else:
+                raise inputDateError()
+        except inputDateError:
+            print("enddate must be of the format YYYY-MM-DD")
+            
         from pandas_datareader import data
         import numpy as np
         import pandas as pd
+        
+        self._stockscodes=stockscodes
         if type(stockscodes)==str:
             temp=data.DataReader(stockscodes,start=startdate,end=enddate,data_source='yahoo')['Adj Close']
             temp.name=stockscodes

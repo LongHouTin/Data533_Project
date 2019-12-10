@@ -31,11 +31,17 @@ class instant():
         
         Sub-index by 4 sector: Finance, Utilities, Properties, Commerce and Industry
         """
-        from bs4 import BeautifulSoup
-        from urllib.request import urlopen
-
         import numpy as np
-        import pandas as pd        
+        import pandas as pd   
+        try:
+            from bs4 import BeautifulSoup
+        except ImportError:
+            print("Error, the module 'bs4' is required.")
+        try:
+            from urllib.request import urlopen
+        except ImportError:
+            print("Error, the module 'urllib' is required.")
+     
         indicesInfo=dict()
         for i in self._names:
             doc=urlopen(self._ZipDict[i])
@@ -50,8 +56,12 @@ class instant():
             for tag in soup.find_all("span",attrs={"class":{"range"}}):
                 temp2.append(tag.string)
             indicesInfo[i]=temp2+temp1
-            
-        return(pd.DataFrame([indicesInfo[i] for i in self._names],columns=np.array(["Previous","Open","Instant"]),index=self._names))
+        
+        try:
+            indicesInfo=pd.DataFrame([indicesInfo[i] for i in self._names],columns=np.array(["Previous","Open","Instant"]),index=self._names)
+        except:
+            print("Something's wrong, an Data Frame is expected to be returned, check the code.")
+        return(indicesInfo)
         
     
     def stocks(self):
@@ -59,10 +69,17 @@ class instant():
         
         Information include 'Code', 'Name', 'Last_price', 'Market_Cap', 'P/E', 'P/B', 'Yield', and 'Sector'
         """
-        from bs4 import BeautifulSoup
-        from urllib.request import urlopen
         import numpy as np
-        import pandas as pd
+        import pandas as pd   
+        try:
+            from bs4 import BeautifulSoup
+        except ImportError:
+            print("Error, the module 'bs4' is required.")
+        try:
+            from urllib.request import urlopen
+        except ImportError:
+            print("Error, the module 'urllib' is required.")
+        
         stocksInfo=dict()
         for i in self._names[1:]: # the first website is not of interest
             doc=urlopen(self._ZipDict[i]).read().decode("utf-8") 
@@ -86,8 +103,12 @@ class instant():
             #[len(i) for i in [temp1,temp2,temp3,temp4,temp5[0],temp5[1],temp5[2]]]
             stocksInfo[i]=pd.DataFrame({key:value for (key,value) in zip(("Code","Name","Last_price","Market_Cap","P/E","P/B","Yield","Sector"),(temp1,temp2,temp3,temp4,temp5[0],temp5[1],temp5[2],np.repeat(i.partition("_Sub")[0],len(temp1))))})
         #[len(stocksInfo[i]) for i in names[1:]]
-        stocksInfo=pd.concat([stocksInfo[i] for i in self._names[1:]])
-        stocksInfo.index=np.arange(1,50+1,1)
+               
+        try:
+            stocksInfo=pd.concat([stocksInfo[i] for i in self._names[1:]])
+            stocksInfo.index=np.arange(1,50+1,1) 
+        except:
+            print("Something's wrong, an Data Frame is expected to be returned, check the code.")
         return(stocksInfo)
     
 
@@ -123,7 +144,7 @@ class useless(instant):
 
 
 
-"""    
+""" 
 # Testing
 if __name__=="__main__":
     #
