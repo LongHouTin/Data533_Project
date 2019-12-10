@@ -5,3 +5,4 @@ import testSam.testHSIinstant, testSam.testHSIhistoric
 # importing pandas and numpy throws errors, why ???
 
 HSIsuite=unittest.TestSuite()
+HSIsuite.addTests([testSam.testHSIinstant.TestHSIinstant("test_indices"),testSam.testHSIinstant.TestHSIinstant("test_stocks")])
