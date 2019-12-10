@@ -30,7 +30,7 @@ class TestHSIinstant(unittest.TestCase):
     def setUpClass(cls):
         import numpy as np, pandas as pd
         import fed.HSI.instant as it        
-        cls.dices=it.instant().indices() # stay coll, N/A pop up since the market is not open, nothing's wrong with the module
+        cls.dices=it.instant().indices() # stay coll, N/A pop up (on Open and Instant) since the market is not open, nothing's wrong with the module
         cls.ocks=it.instant().stocks()
         print("setUpClass")
     
@@ -56,11 +56,11 @@ class TestHSIinstant(unittest.TestCase):
         self.assertIsInstance(self.__class__.dices,pd.DataFrame)
         self.assertEqual(self.__class__.dices.shape,(5,3)) 
         # self.assertTrue(pd.Series(self.__class__.dices.iloc[:,i].dtype for i in range(3)).isin(["object"]).all()) # inconssitent results in spyder3 and jupyter notebook
-        self.assertIsNotNone(self.__class__.dices.iloc[np.random.randint(0,3,1),random.sample([0,2],1)].applymap(lambda x: float(x.replace(",","")))) # applymap is for pd.DF 
+        self.assertIsNotNone(self.__class__.dices.iloc[np.random.randint(0,3,1),random.sample([0],1)].applymap(lambda x: float(x.replace(",","")))) # applymap is for pd.DF 
         # random.choices([1,2],k=3) is sample with replacement
         # random.sample([1,2],k=2) is sample without replacement, k must be samller than or equal to the length of the list 
         # focus on only column 0 or 2 is because when the market is not open the middle column "Open" will be a bs4.element.NavigableString "N/A"
-        self.assertFalse(self.__class__.dices.iloc[int(np.random.randint(0,3,1)),[0,2]].apply(lambda x: float(x.replace(",",""))).isnull().any()) # apply is for pd.S
+        self.assertFalse(self.__class__.dices.iloc[int(np.random.randint(0,3,1)),[0]].apply(lambda x: float(x.replace(",",""))).isnull().any()) # apply is for pd.S
         # subsetting DF with a array of length 1 does NOT returns pd.Series, but a DataFrame of shape(1,n)
     
     # Test 2    
@@ -88,4 +88,4 @@ if __name__=="__main__":
     #HSIsuite.addTest(TestHSI("test_indices"))
     HSIsuite1.addTests([TestHSIinstant("test_indices"),TestHSIinstant("test_stocks")])
     unittest.TextTestRunner().run(HSIsuite1)
-"""    
+""" 
