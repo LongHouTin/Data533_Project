@@ -3,6 +3,7 @@
 __all__ = ["get_info","show"]
 
 
+
 import os
 import sys
 
@@ -12,10 +13,11 @@ if sys.platform == 'win32' and os.path.isdir(extra_dll_dir):
     os.environ.setdefault('PATH', '')
     os.environ['PATH'] += os.pathsep + extra_dll_dir
 
-blas_mkl_info={'libraries': ['blas', 'cblas', 'lapack', 'blas', 'cblas', 'lapack'], 'library_dirs': ['C:/Users/longh/ANACON~1/envs/data540-mini-proj\\Library\\lib'], 'define_macros': [('SCIPY_MKL_H', None), ('HAVE_CBLAS', None)], 'include_dirs': ['C:/Users/longh/ANACON~1/envs/data540-mini-proj\\Library\\include']}
-blas_opt_info={'libraries': ['blas', 'cblas', 'lapack', 'blas', 'cblas', 'lapack', 'blas', 'cblas', 'lapack'], 'library_dirs': ['C:/Users/longh/ANACON~1/envs/data540-mini-proj\\Library\\lib'], 'define_macros': [('SCIPY_MKL_H', None), ('HAVE_CBLAS', None)], 'include_dirs': ['C:/Users/longh/ANACON~1/envs/data540-mini-proj\\Library\\include']}
-lapack_mkl_info={'libraries': ['blas', 'cblas', 'lapack', 'blas', 'cblas', 'lapack'], 'library_dirs': ['C:/Users/longh/ANACON~1/envs/data540-mini-proj\\Library\\lib'], 'define_macros': [('SCIPY_MKL_H', None), ('HAVE_CBLAS', None)], 'include_dirs': ['C:/Users/longh/ANACON~1/envs/data540-mini-proj\\Library\\include']}
-lapack_opt_info={'libraries': ['blas', 'cblas', 'lapack', 'blas', 'cblas', 'lapack', 'blas', 'cblas', 'lapack'], 'library_dirs': ['C:/Users/longh/ANACON~1/envs/data540-mini-proj\\Library\\lib'], 'define_macros': [('SCIPY_MKL_H', None), ('HAVE_CBLAS', None)], 'include_dirs': ['C:/Users/longh/ANACON~1/envs/data540-mini-proj\\Library\\include']}
+mkl_info={'libraries': ['mkl_rt'], 'library_dirs': ['C:/Users/longh/Anaconda3\\Library\\lib'], 'define_macros': [('SCIPY_MKL_H', None), ('HAVE_CBLAS', None)], 'include_dirs': ['C:\\Program Files (x86)\\IntelSWTools\\compilers_and_libraries_2019.0.117\\windows\\mkl', 'C:\\Program Files (x86)\\IntelSWTools\\compilers_and_libraries_2019.0.117\\windows\\mkl\\include', 'C:\\Program Files (x86)\\IntelSWTools\\compilers_and_libraries_2019.0.117\\windows\\mkl\\lib', 'C:/Users/longh/Anaconda3\\Library\\include']}
+blas_mkl_info={'libraries': ['mkl_rt'], 'library_dirs': ['C:/Users/longh/Anaconda3\\Library\\lib'], 'define_macros': [('SCIPY_MKL_H', None), ('HAVE_CBLAS', None)], 'include_dirs': ['C:\\Program Files (x86)\\IntelSWTools\\compilers_and_libraries_2019.0.117\\windows\\mkl', 'C:\\Program Files (x86)\\IntelSWTools\\compilers_and_libraries_2019.0.117\\windows\\mkl\\include', 'C:\\Program Files (x86)\\IntelSWTools\\compilers_and_libraries_2019.0.117\\windows\\mkl\\lib', 'C:/Users/longh/Anaconda3\\Library\\include']}
+blas_opt_info={'libraries': ['mkl_rt'], 'library_dirs': ['C:/Users/longh/Anaconda3\\Library\\lib'], 'define_macros': [('SCIPY_MKL_H', None), ('HAVE_CBLAS', None)], 'include_dirs': ['C:\\Program Files (x86)\\IntelSWTools\\compilers_and_libraries_2019.0.117\\windows\\mkl', 'C:\\Program Files (x86)\\IntelSWTools\\compilers_and_libraries_2019.0.117\\windows\\mkl\\include', 'C:\\Program Files (x86)\\IntelSWTools\\compilers_and_libraries_2019.0.117\\windows\\mkl\\lib', 'C:/Users/longh/Anaconda3\\Library\\include']}
+lapack_mkl_info={'libraries': ['mkl_rt'], 'library_dirs': ['C:/Users/longh/Anaconda3\\Library\\lib'], 'define_macros': [('SCIPY_MKL_H', None), ('HAVE_CBLAS', None)], 'include_dirs': ['C:\\Program Files (x86)\\IntelSWTools\\compilers_and_libraries_2019.0.117\\windows\\mkl', 'C:\\Program Files (x86)\\IntelSWTools\\compilers_and_libraries_2019.0.117\\windows\\mkl\\include', 'C:\\Program Files (x86)\\IntelSWTools\\compilers_and_libraries_2019.0.117\\windows\\mkl\\lib', 'C:/Users/longh/Anaconda3\\Library\\include']}
+lapack_opt_info={'libraries': ['mkl_rt'], 'library_dirs': ['C:/Users/longh/Anaconda3\\Library\\lib'], 'define_macros': [('SCIPY_MKL_H', None), ('HAVE_CBLAS', None)], 'include_dirs': ['C:\\Program Files (x86)\\IntelSWTools\\compilers_and_libraries_2019.0.117\\windows\\mkl', 'C:\\Program Files (x86)\\IntelSWTools\\compilers_and_libraries_2019.0.117\\windows\\mkl\\include', 'C:\\Program Files (x86)\\IntelSWTools\\compilers_and_libraries_2019.0.117\\windows\\mkl\\lib', 'C:/Users/longh/Anaconda3\\Library\\include']}
 
 def get_info(name):
     g = globals()
@@ -32,3 +34,4 @@ def show():
             if k == "sources" and len(v) > 200:
                 v = v[:60] + " ...\n... " + v[-60:]
             print("    %s = %s" % (k,v))
+    

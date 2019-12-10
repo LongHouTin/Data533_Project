@@ -300,7 +300,14 @@ class Gnu95FCompiler(GnuFCompiler):
                     self.executables[key].append('-mno-cygwin')
         return v
 
-    possible_executables = ['gfortran', 'f95']
+    possible_executables = []
+    _env_gfortran = os.getenv('GFORTRAN')
+    if _env_gfortran is not None:
+        possible_executables.append(os.path.basename(_env_gfortran))
+    possible_executables.extend(['gfortran', 'f95'])
+
+    if os.getenv('GFORTRAN'):
+        possible_executables.append(os.path.basename(os.getenv('GFORTRAN')))
     executables = {
         'version_cmd'  : ["<F90>", "-dumpversion"],
         'compiler_f77' : [None, "-Wall", "-g", "-ffixed-form",
@@ -327,20 +334,9 @@ class Gnu95FCompiler(GnuFCompiler):
     g2c = 'gfortran'
 
     def _universal_flags(self, cmd):
-        """Return a list of -arch flags for every supported architecture."""
         if not sys.platform == 'darwin':
             return []
-        arch_flags = []
-        # get arches the C compiler gets.
-        c_archs = self._c_arch_flags()
-        if "i386" in c_archs:
-            c_archs[c_archs.index("i386")] = "i686"
-        # check the arches the Fortran compiler supports, and compare with
-        # arch flags from C compiler
-        for arch in ["ppc", "i686", "x86_64", "ppc64"]:
-            if _can_target(cmd, arch) and arch in c_archs:
-                arch_flags.extend(["-arch", arch])
-        return arch_flags
+        return ['-m' + platform.architecture()[0][:2]]
 
     def get_flags(self):
         flags = GnuFCompiler.get_flags(self)

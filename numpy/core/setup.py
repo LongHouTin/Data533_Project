@@ -6,10 +6,9 @@ import pickle
 import copy
 import warnings
 import platform
-import textwrap
 from os.path import join
-
 from numpy.distutils import log
+from numpy.distutils.system_info import get_info
 from distutils.dep_util import newer
 from distutils.sysconfig import get_config_var
 from numpy._build_utils.apple_accelerate import (
@@ -171,11 +170,6 @@ def check_math_capabilities(config, moredefs, mathlibs):
 
     for dec, fn in OPTIONAL_FUNCTION_ATTRIBUTES:
         if config.check_gcc_function_attribute(dec, fn):
-            moredefs.append((fname2def(fn), 1))
-
-    for dec, fn, code, header in OPTIONAL_FUNCTION_ATTRIBUTES_WITH_INTRINSICS:
-        if config.check_gcc_function_attribute_with_intrinsics(dec, fn, code,
-                                                               header):
             moredefs.append((fname2def(fn), 1))
 
     for fn in OPTIONAL_VARIABLE_ATTRIBUTES:
@@ -468,42 +462,45 @@ def configuration(parent_package='',top_path=None):
                 moredefs.append(('NPY_PY3K', 1))
 
             # Generate the config.h file from moredefs
-            with open(target, 'w') as target_f:
-                for d in moredefs:
-                    if isinstance(d, str):
-                        target_f.write('#define %s\n' % (d))
-                    else:
-                        target_f.write('#define %s %s\n' % (d[0], d[1]))
-
-                # define inline to our keyword, or nothing
-                target_f.write('#ifndef __cplusplus\n')
-                if inline == 'inline':
-                    target_f.write('/* #undef inline */\n')
+            target_f = open(target, 'w')
+            for d in moredefs:
+                if isinstance(d, str):
+                    target_f.write('#define %s\n' % (d))
                 else:
-                    target_f.write('#define inline %s\n' % inline)
-                target_f.write('#endif\n')
+                    target_f.write('#define %s %s\n' % (d[0], d[1]))
 
-                # add the guard to make sure config.h is never included directly,
-                # but always through npy_config.h
-                target_f.write(textwrap.dedent("""
-                    #ifndef _NPY_NPY_CONFIG_H_
-                    #error config.h should never be included directly, include npy_config.h instead
-                    #endif
-                    """))
+            # define inline to our keyword, or nothing
+            target_f.write('#ifndef __cplusplus\n')
+            if inline == 'inline':
+                target_f.write('/* #undef inline */\n')
+            else:
+                target_f.write('#define inline %s\n' % inline)
+            target_f.write('#endif\n')
 
+            # add the guard to make sure config.h is never included directly,
+            # but always through npy_config.h
+            target_f.write("""
+#ifndef _NPY_NPY_CONFIG_H_
+#error config.h should never be included directly, include npy_config.h instead
+#endif
+""")
+
+            target_f.close()
             print('File:', target)
-            with open(target) as target_f:
-                print(target_f.read())
+            target_f = open(target)
+            print(target_f.read())
+            target_f.close()
             print('EOF')
         else:
             mathlibs = []
-            with open(target) as target_f:
-                for line in target_f:
-                    s = '#define MATHLIB'
-                    if line.startswith(s):
-                        value = line[len(s):].strip()
-                        if value:
-                            mathlibs.extend(value.split(','))
+            target_f = open(target)
+            for line in target_f:
+                s = '#define MATHLIB'
+                if line.startswith(s):
+                    value = line[len(s):].strip()
+                    if value:
+                        mathlibs.extend(value.split(','))
+            target_f.close()
 
         # Ugly: this can be called within a library and not an extension,
         # in which case there is no libraries attributes (and none is
@@ -566,24 +563,26 @@ def configuration(parent_package='',top_path=None):
             moredefs.append(('NPY_API_VERSION', '0x%.8X' % C_API_VERSION))
 
             # Add moredefs to header
-            with open(target, 'w') as target_f:
-                for d in moredefs:
-                    if isinstance(d, str):
-                        target_f.write('#define %s\n' % (d))
-                    else:
-                        target_f.write('#define %s %s\n' % (d[0], d[1]))
+            target_f = open(target, 'w')
+            for d in moredefs:
+                if isinstance(d, str):
+                    target_f.write('#define %s\n' % (d))
+                else:
+                    target_f.write('#define %s %s\n' % (d[0], d[1]))
 
-                # Define __STDC_FORMAT_MACROS
-                target_f.write(textwrap.dedent("""
-                    #ifndef __STDC_FORMAT_MACROS
-                    #define __STDC_FORMAT_MACROS 1
-                    #endif
-                    """))
+            # Define __STDC_FORMAT_MACROS
+            target_f.write("""
+#ifndef __STDC_FORMAT_MACROS
+#define __STDC_FORMAT_MACROS 1
+#endif
+""")
+            target_f.close()
 
             # Dump the numpyconfig.h header to stdout
             print('File: %s' % target)
-            with open(target) as target_f:
-                print(target_f.read())
+            target_f = open(target)
+            print(target_f.read())
+            target_f.close()
             print('EOF')
         config.add_data_files((header_dir, target))
         return target
@@ -610,11 +609,12 @@ def configuration(parent_package='',top_path=None):
     config.add_include_dirs(join(local_dir, "src"))
     config.add_include_dirs(join(local_dir))
 
-    config.add_data_dir('include/numpy')
+    config.add_data_files('include/numpy/*.h')
     config.add_include_dirs(join('src', 'npymath'))
     config.add_include_dirs(join('src', 'multiarray'))
     config.add_include_dirs(join('src', 'umath'))
     config.add_include_dirs(join('src', 'npysort'))
+    config.add_include_dirs(join('src', 'mkl_defs'))
 
     config.add_define_macros([("NPY_INTERNAL_BUILD", "1")]) # this macro indicates that Numpy build is in process
     config.add_define_macros([("HAVE_NPY_CONFIG_H", "1")])
@@ -705,9 +705,7 @@ def configuration(parent_package='',top_path=None):
     npysort_sources = [join('src', 'common', 'npy_sort.h.src'),
                        join('src', 'npysort', 'quicksort.c.src'),
                        join('src', 'npysort', 'mergesort.c.src'),
-                       join('src', 'npysort', 'timsort.c.src'),
                        join('src', 'npysort', 'heapsort.c.src'),
-                       join('src', 'npysort', 'radixsort.c.src'),
                        join('src', 'common', 'npy_partition.h.src'),
                        join('src', 'npysort', 'selection.c.src'),
                        join('src', 'common', 'npy_binsearch.h.src'),
@@ -715,6 +713,17 @@ def configuration(parent_package='',top_path=None):
                        ]
     config.add_library('npysort',
                        sources=npysort_sources,
+                       include_dirs=[])
+
+    #######################################################################
+    #                         mkl_cp library                              #
+    #######################################################################
+
+    # This library is created for the build but it is not installed
+    mkl_cp_sources = [join('src', 'mkl_defs', 'mkl_cpy.h'),
+                       join('src', 'mkl_defs', 'mkl_cpy.c')]
+    config.add_library('mkl_cp',
+                       sources=mkl_cp_sources,
                        include_dirs=[])
 
     #######################################################################
@@ -814,7 +823,6 @@ def configuration(parent_package='',top_path=None):
             join('include', 'numpy', 'noprefix.h'),
             join('include', 'numpy', 'npy_interrupt.h'),
             join('include', 'numpy', 'npy_3kcompat.h'),
-            join('include', 'numpy', 'npy_math.h'),
             join('include', 'numpy', 'halffloat.h'),
             join('include', 'numpy', 'npy_common.h'),
             join('include', 'numpy', 'npy_os.h'),
@@ -826,7 +834,7 @@ def configuration(parent_package='',top_path=None):
             join('include', 'numpy', 'npy_1_7_deprecated_api.h'),
             # add library sources as distuils does not consider libraries
             # dependencies
-            ] + npysort_sources + npymath_sources
+            ] + npysort_sources
 
     multiarray_src = [
             join('src', 'multiarray', 'alloc.c'),
@@ -877,6 +885,11 @@ def configuration(parent_package='',top_path=None):
             join('src', 'multiarray', 'vdot.c'),
             ]
 
+    aligned_alloc_sources = [
+        join('src', 'mkl_defs', 'aligned_alloc.h'),
+        join('src', 'mkl_defs', 'aligned_alloc.c')
+    ]
+
     #######################################################################
     #             _multiarray_umath module - umath part                   #
     #######################################################################
@@ -888,22 +901,22 @@ def configuration(parent_package='',top_path=None):
             os.makedirs(dir)
         script = generate_umath_py
         if newer(script, target):
-            with open(target, 'w') as f:
-                f.write(generate_umath.make_code(generate_umath.defdict,
-                                                 generate_umath.__file__))
+            f = open(target, 'w')
+            f.write(generate_umath.make_code(generate_umath.defdict,
+                                             generate_umath.__file__))
+            f.close()
         return []
+
+    loops_src = [join('src', 'umath', 'loops.c.src'),
+                 join('src', 'umath', 'loops.h.src'),]
 
     umath_src = [
             join('src', 'umath', 'umathmodule.c'),
             join('src', 'umath', 'reduction.c'),
             join('src', 'umath', 'funcs.inc.src'),
             join('src', 'umath', 'simd.inc.src'),
-            join('src', 'umath', 'loops.h.src'),
-            join('src', 'umath', 'loops.c.src'),
             join('src', 'umath', 'matmul.h.src'),
             join('src', 'umath', 'matmul.c.src'),
-            join('src', 'umath', 'clip.h.src'),
-            join('src', 'umath', 'clip.c.src'),
             join('src', 'umath', 'ufunc_object.c'),
             join('src', 'umath', 'extobj.c'),
             join('src', 'umath', 'cpuid.c'),
@@ -924,6 +937,21 @@ def configuration(parent_package='',top_path=None):
             join(codegen_dir, 'generate_ufunc_api.py'),
             ]
 
+#    if platform.system() == "Windows":
+#        eca = ['/fp:fast=2', '/Qimf-precision=high', '/Qprec-sqrt', '/Qstd=c99']
+#        if sys.version_info < (3, 0):
+#            eca.append('/Qprec-div')
+#    else:
+#        eca = ['-fp-model', 'fast=2', '-fimf-precision=high', '-prec-sqrt']
+    eca=[]
+    config.add_library('loops',
+                       sources=loops_src,
+                       include_dirs=[],
+                       extra_compiler_args=eca,
+                       depends=deps + umath_deps,
+                       macros=getattr(config, 'define_macros', getattr(config.get_distribution(), 'define_macros', []))
+                       )
+
     config.add_extension('_multiarray_umath',
                          sources=multiarray_src + umath_src +
                                  npymath_sources + common_src +
@@ -934,10 +962,11 @@ def configuration(parent_package='',top_path=None):
                                   join('*.py'),
                                   generate_umath_c,
                                   generate_ufunc_api,
-                                 ],
+                                 ] + aligned_alloc_sources,
+                         extra_compile_args=[],
                          depends=deps + multiarray_deps + umath_deps +
                                 common_deps,
-                         libraries=['npymath', 'npysort'],
+                         libraries=['loops', 'npymath', 'npysort', 'mkl_cp'],
                          extra_info=extra_info)
 
     #######################################################################
@@ -952,7 +981,10 @@ def configuration(parent_package='',top_path=None):
     #######################################################################
 
     config.add_extension('_rational_tests',
-                    sources=[join('src', 'umath', '_rational_tests.c.src')])
+                    sources=[join('src', 'umath', '_rational_tests.c.src')],
+                    libraries=['mkl_cp'],
+                    extra_info=extra_info
+                    )
 
     #######################################################################
     #                        struct_ufunc_test module                     #

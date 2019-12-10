@@ -27,7 +27,10 @@ class TestMemmap(object):
 
     def teardown(self):
         self.tmpfp.close()
-        shutil.rmtree(self.tempdir)
+        try:
+            shutil.rmtree(self.tempdir)
+        except:
+            pass
 
     def test_roundtrip(self):
         # Write data to file
@@ -62,34 +65,6 @@ class TestMemmap(object):
                     shape=self.shape, offset=offset)
         assert_equal(offset, fp.offset)
         assert_equal(mode, fp.mode)
-        del fp
-
-    def test_filename(self):
-        tmpname = mktemp('', 'mmap', dir=self.tempdir)
-        fp = memmap(tmpname, dtype=self.dtype, mode='w+',
-                       shape=self.shape)
-        abspath = os.path.abspath(tmpname)
-        fp[:] = self.data[:]
-        assert_equal(abspath, fp.filename)
-        b = fp[:1]
-        assert_equal(abspath, b.filename)
-        del b
-        del fp
-
-    @pytest.mark.skipif(Path is None, reason="No pathlib.Path")
-    def test_path(self):
-        tmpname = mktemp('', 'mmap', dir=self.tempdir)
-        fp = memmap(Path(tmpname), dtype=self.dtype, mode='w+',
-                       shape=self.shape)
-        # os.path.realpath does not resolve symlinks on Windows
-        # see: https://bugs.python.org/issue9949
-        # use Path.resolve, just as memmap class does internally
-        abspath = str(Path(tmpname).resolve())
-        fp[:] = self.data[:]
-        assert_equal(abspath, str(fp.filename.resolve()))
-        b = fp[:1]
-        assert_equal(abspath, str(b.filename.resolve()))
-        del b
         del fp
 
     def test_filename_fileobj(self):
@@ -204,13 +179,3 @@ class TestMemmap(object):
         self.tmpfp.write(b'a'*16)
         mm = memmap(self.tmpfp, dtype='float64')
         assert_equal(mm.shape, (2,))
-
-    def test_empty_array(self):
-        # gh-12653
-        with pytest.raises(ValueError, match='empty file'):
-            memmap(self.tmpfp, shape=(0,4), mode='w+')
-
-        self.tmpfp.write(b'\0')
-
-        # ok now the file is not empty
-        memmap(self.tmpfp, shape=(0,4), mode='w+')

@@ -2292,7 +2292,7 @@ class TestIterNested(object):
         assert_equal(vals, [[0, 1, 2], [3, 4, 5]])
         vals = None
 
-        # writebackifcopy - using context manager
+        # writebackifcopy - using conext manager
         a = arange(6, dtype='f4').reshape(2, 3)
         i, j = np.nested_iters(a, [[0], [1]],
                             op_flags=['readwrite', 'updateifcopy'],
