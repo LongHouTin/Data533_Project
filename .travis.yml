@@ -3,4 +3,5 @@ python:
   - "3.6"
 
 script:
+  - python import pandas as pd
   - python travisHSI.py
