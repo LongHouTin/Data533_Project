@@ -46,9 +46,9 @@ class instant():
         for i in self._names:
             doc=urlopen(self._ZipDict[i])
             soup=BeautifulSoup(doc,"html.parser")
-            dest="C:/Users/longh/Desktop/Python_working directory/"+i+".txt"
-            with open(dest,"w",encoding="utf8") as fucd:
-                fucd.write(soup.prettify())
+            #dest="C:/Users/longh/Desktop/Python_working directory/"+i+".txt"
+            #with open(dest,"w",encoding="utf8") as fucd:
+            #    fucd.write(soup.prettify())
             temp1=list()
             for tag in soup.find_all("div",attrs={"class":{"hkidx-last txt_r"}}): 
                 temp1.append(tag.string) 
