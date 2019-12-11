@@ -5,6 +5,8 @@ python:
 install:
   - python -m pip install pandas
   - python -m pip install bs4
+  - python -m pip install pandas_datareader
+  - python -m pip install seaborn
 
 script:
   - python travisHSI.py
