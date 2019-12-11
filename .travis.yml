@@ -4,6 +4,7 @@ python:
 
 install:
   - python -m pip install pandas
+  - python -m pip install bs4
 
 script:
   - python travisHSI.py
